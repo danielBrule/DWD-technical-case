@@ -19,8 +19,8 @@ sources:
             data_type: string
             description: "Fund name"
           - name: _fund_size_
-            data_type: int64
-            description: "Committed fund size"
+            data_type: float64
+            description: "Committed fund size (in USD)"
           - name: transaction_type
             data_type: string
             description: "Type of transaction (e.g., call, distribution)"
@@ -32,7 +32,7 @@ sources:
             description: "Transaction date"
           - name: _transaction_amount_
             data_type: float64
-            description: "Transaction amount"
+            description: "Transaction amount (in USD)"
           - name: sector
             data_type: string
             description: "Sector classification of the fund or transaction"
@@ -70,8 +70,8 @@ sources:
             data_type: date
             description: "Date of the transaction"
           - name: transaction_amount
-            data_type: int64
-            description: "Transaction amount in source currency"
+            data_type: float64
+            description: "Transaction amount (in USD)"
           - name: sector
             data_type: string
             description: "Company sector classification"
