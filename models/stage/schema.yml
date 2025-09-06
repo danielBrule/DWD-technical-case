@@ -1,21 +1,87 @@
-
 version: 2
-
 models:
-    - name: stg_company_model
-      description: "dbt model for company"
-      columns:
-          - name: id
-            description: "The primary key for this table"
-            tests:
-                - unique
-                - not_null
+  - name: stg_company
+    columns:
+      - name: fund_name
+        tests:
+          - not_null
+      - name: company_id
+        tests:
+          - not_null
+      - name: company_name
+        tests:
+          - not_null
+      - name: transaction_type
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - Valuation
+      - name: transaction_index
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression:  "> 0"
+      - name: transaction_date
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= '2020-01-01'"
+      - name: transaction_amount
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+    tests:
+      - one_to_one:
+          column_a: company_id
+          column_b: company_name
 
-    - name: stg_fund_model
-      description: "dbt model for funds"
-      columns:
-          - name: id
-            description: "The primary key for this table"
-            tests:
-                - unique
-                - not_null
+
+
+  - name: stg_fund
+    columns:
+      - name: fund_name
+        tests:
+          - not_null
+      - name: fund_size
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+      - name: transaction_type
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - Valuation
+                - Commitment
+                - Distribution
+                - Call
+      - name: transaction_index
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+      - name: transaction_date
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= '2020-01-01'"
+      - name: transaction_amount
+        tests:
+          - not_null
+
+      - name: sector
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - Venture Capital
+                - Private Equity
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "case when transaction_type = 'Distribution'
+                             then transaction_amount < 0
+                             else transaction_amount > 0
+                           end"

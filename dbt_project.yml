@@ -40,3 +40,12 @@ models:
     # Applies to all files under models/example/
     stage:
       +materialized: table
+
+seeds:
+  +schema: refdata
+  your_project_name:
+    country_map:
+      +column_types:
+        raw_value: string
+        country_standard: string
+        iso2: string
