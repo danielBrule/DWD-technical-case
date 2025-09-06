@@ -1,0 +1,21 @@
+
+version: 2
+
+models:
+    - name: stg_company_model
+      description: "dbt model for company"
+      columns:
+          - name: id
+            description: "The primary key for this table"
+            tests:
+                - unique
+                - not_null
+
+    - name: stg_fund_model
+      description: "dbt model for funds"
+      columns:
+          - name: id
+            description: "The primary key for this table"
+            tests:
+                - unique
+                - not_null
