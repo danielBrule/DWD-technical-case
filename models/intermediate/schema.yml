@@ -68,10 +68,10 @@ models:
       - name: transaction_date
         description: "Date of the event (valuation or cashflow)."
       - name: transaction_type
-        description: "Event type (valuation, commitment, distribution, call)."
+        description: "Event type (Valuation, Commitment, Distribution, Call)."
         tests:
           - accepted_values:
-              values: ['valuation','commitment','distribution','call']
+              values: ['Valuation','Commitment','Distribution','Call']
       - name: transaction_index
         description: "Ordering index of the event within the fund."
         tests: [not_null]

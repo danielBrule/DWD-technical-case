@@ -8,7 +8,7 @@ with src as (
     trim(`fund_name`)                               as fund_name,
     safe_cast(`_fund_size_` as int64)                 as fund_size,
     nullif(initcap(trim(`transaction_type`)), '')   as transaction_type,
-    safe_cast(`transaction_index` as int64)         as transaction_index,
+    safe_cast(ceil(`transaction_index`) as int64)         as transaction_index,
     safe_cast(`transaction_date` as date)           as transaction_date,
     safe_cast(`_transaction_amount_` as numeric)      as transaction_amount,
     nullif(initcap(trim(`sector`)), '')             as sector,
