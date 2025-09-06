@@ -1,55 +1,97 @@
 version: 2
+
 models:
   - name: stg_company
+    description: >
+      Staging model for raw company-level transactions and valuations. 
+      This model standardizes column names, enforces data types, 
+      and applies basic quality checks before the data is used for analytics.
     columns:
       - name: fund_name
+        description: "Name of the parent fund that owns the company."
         tests:
           - not_null
+          - relationships:               
+              to: ref('stg_fund')         
+              field: fund_name
+
       - name: company_id
+        description: "Unique identifier of the company as provided in the source system."
         tests:
           - not_null
+
       - name: company_name
+        description: "Reported name of the company in which the fund has invested."
         tests:
           - not_null
+
       - name: transaction_type
+        description: "Type of company transaction record. Expected to be 'Valuation'."
         tests:
           - not_null
           - accepted_values:
               values:
                 - Valuation
+
       - name: transaction_index
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              expression:  "> 0"
-      - name: transaction_date
-        tests:
-          - not_null
-          - dbt_utils.expression_is_true:
-              expression: ">= '2020-01-01'"
-      - name: transaction_amount
+        description: "Sequence or ordering index of the transaction within the fund/company."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
               expression: "> 0"
+
+      - name: transaction_date
+        description: "Date when the valuation or transaction was recorded. Must be >= 2020-01-01."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= '2020-01-01'"
+
+      - name: transaction_amount
+        description: "Reported valuation amount for the company. Must be greater than 0."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+      - name: sector
+        description: "Sector classification of the fund or transaction"
+      - name: country
+        description: "Country associated with the fund or transaction"
+      - name: region
+        description: "Region associated with the fund or transaction"
+      - name: source_filename
+        description: "Source file of the raw"
+      - name: ingested_at
+        description: "ingestion date"
+
     tests:
       - one_to_one:
           column_a: company_id
           column_b: company_name
 
 
-
   - name: stg_fund
+    description: >
+      Staging model for raw fund-level transactions and valuations.
+      This model applies type casting, column renaming, and business rules 
+      such as enforcing negative amounts for distributions and positive amounts otherwise.
     columns:
       - name: fund_name
+        description: "Name of the fund as reported in the source system."
         tests:
           - not_null
+
       - name: fund_size
+        description: "Latest reported size of the fund (committed capital). Must be positive."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
               expression: "> 0"
+
       - name: transaction_type
+        description: >
+          Type of transaction at the fund level. Can be a valuation snapshot 
+          or a cashflow event (Commitment, Distribution, Call).
         tests:
           - not_null
           - accepted_values:
@@ -58,30 +100,51 @@ models:
                 - Commitment
                 - Distribution
                 - Call
+
       - name: transaction_index
+        description: "Sequence or ordering index of the transaction within the fund. Must be > 0."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
               expression: "> 0"
+
       - name: transaction_date
+        description: "Date when the fund valuation or transaction occurred. Must be >= 2020-01-01."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
               expression: ">= '2020-01-01'"
+
       - name: transaction_amount
+        description: >
+          Signed transaction amount for the fund. Distributions should be negative, 
+          while other transaction types should be positive.
         tests:
           - not_null
 
       - name: sector
+        description: "Reported sector classification of the fund (Venture Capital or Private Equity)."
         tests:
           - not_null
           - accepted_values:
               values:
                 - Venture Capital
                 - Private Equity
+      - name: country
+        description: "Country associated with the fund"
+      - name: region
+        description: "Region associated with the fund"
+      - name: source_filename
+        description: "Source file of the raw"
+      - name: ingested_at
+        description: "ingestion date"
+
     tests:
       - dbt_utils.expression_is_true:
           expression: "case when transaction_type = 'Distribution'
                              then transaction_amount < 0
                              else transaction_amount > 0
                            end"
+      - one_to_one:
+          column_a: fund_name
+          column_b: fund_size

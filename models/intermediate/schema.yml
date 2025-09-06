@@ -1,0 +1,103 @@
+version: 2
+
+models:
+  - name: dim_fund
+    description: >
+      Dimension table containing a unique record per fund.
+      Stores static fund-level attributes such as name and latest size.
+      Grain: 1 row per fund.
+    columns:
+      - name: fund_sk
+        tests: [unique, not_null]
+        description: "Unique id of the fund."
+      - name: fund_name
+        description: "Unique name of the fund."
+        tests: [unique, not_null]
+      - name: fund_size
+        description: >
+          Size of the fund (committed capital, USD). 
+
+  - name: dim_company
+    description: >
+      Dimension table containing a unique record per company.
+      Uses company_id as the primary key (no surrogate).
+      Grain: 1 row per company.
+    columns:
+      - name: company_id
+        description: "Unique identifier for the company (business key)."
+        tests: [unique, not_null]
+      - name: company_name
+        description: "Official company name as reported in the source system."
+        tests: [not_null]
+
+  - name: bridge_fund_company
+    description: >
+      Bridge table linking funds to companies. 
+      Represents the many-to-many relationship between funds and companies.
+      Grain: 1 row per distinct (fund_sk, company_id) pair.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: ['fund_sk','company_id']
+    columns:
+      - name: fund_sk
+        description: "key for the fund, referencing dim_fund.fund_sk."
+        tests:
+          - relationships:
+              to: ref('dim_fund')
+              field: fund_sk
+      - name: company_id
+        description: "Business key for the company, referencing dim_company.company_id."
+        tests:
+          - relationships:
+              to: ref('dim_company')
+              field: company_id
+
+  - name: fct_fund_event
+    description: >
+      Fact table for fund-level events, including valuations and cashflows
+      (Commitments, Distributions, Calls).
+      Grain: 1 row per fund per transaction_index.
+    columns:
+      - name: fund_sk
+        description: "Surrogate_key for the fund."
+        tests:
+          - relationships:
+              to: ref('dim_fund')
+              field: fund_sk
+
+      - name: transaction_date
+        description: "Date of the event (valuation or cashflow)."
+      - name: transaction_type
+        description: "Event type (valuation, commitment, distribution, call)."
+        tests:
+          - accepted_values:
+              values: ['valuation','commitment','distribution','call']
+      - name: transaction_index
+        description: "Ordering index of the event within the fund."
+        tests: [not_null]
+      - name: amount
+        description: "Signed amount of the transaction or valuation."
+
+  - name: fct_company_valuation
+    description: >
+      Fact table of company-level valuations within each fund.
+      Grain: 1 row per (fund_name, company_id, val_date).
+    columns:
+      - name: fund_name
+        description: "Business key for the fund, referencing dim_fund.fund_name."
+        tests:
+          - relationships:
+              to: ref('dim_fund')
+              field: fund_name
+      - name: company_id
+        description: "Business key for the company, referencing dim_company.company_id."
+        tests:
+          - relationships:
+              to: ref('dim_company')
+              field: company_id
+      - name: val_date
+        description: "Date of the valuation."
+      - name: valuation_amount
+        description: "Reported valuation amount for the company at val_date."
+      - name: transaction_index
+        description: "Ordering index of the valuation record."
