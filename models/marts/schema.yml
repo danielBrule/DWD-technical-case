@@ -21,3 +21,21 @@ models:
         description: "Computed NAV of the fund on nav_date."
         tests:
           - not_null
+
+  - name: question_2-2-CompanyNAV
+    description: "Company NAV over time using ownership = commitments_to_date / latest fund_size."
+    columns:
+      - name: fund_name
+        tests:
+          - not_null
+      - name: company_id
+        tests:
+          - not_null
+      - name: nav_date
+        tests:
+          - not_null
+      - name: company_nav
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"   # NAV should be non-negative under this method

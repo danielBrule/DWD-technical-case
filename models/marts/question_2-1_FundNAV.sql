@@ -1,4 +1,4 @@
-{{ config(materialized='view', schema='marts') }}
+{{ config(materialized='table', schema='marts') }}
 
 
 
