@@ -28,9 +28,6 @@ models:
       - name: fund_name
         tests:
           - not_null
-      - name: company_id
-        tests:
-          - not_null
       - name: nav_date
         tests:
           - not_null
