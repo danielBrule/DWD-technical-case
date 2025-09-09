@@ -22,7 +22,6 @@ select
     fund_name,
     transaction_date,
     transaction_type,
-    transaction_amount,
-    transaction_index
+    transaction_amount
 from ranked
 where rn = 1

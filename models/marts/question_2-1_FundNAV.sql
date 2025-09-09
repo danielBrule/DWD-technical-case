@@ -2,102 +2,81 @@
 
 
 
-
--- 1) One valuation per fund/date (latest by transaction_index)
-with valuations as (
+-- 1) All valuations
+with clean_valuations as (
   select
-    fund_sk,
+    fund_name,
     transaction_date,
     transaction_amount as valuation_amount,
-    row_number() over (
-      partition by fund_sk, transaction_date
-      order by transaction_index desc
-    ) as rn
   from {{ ref('fct_fund_event') }}
-  where lower(transaction_type) = 'valuation'
-),
-clean_valuations as (
-  select fund_sk, transaction_date, valuation_amount
-  from valuations
-  where rn = 1
+  where transaction_type = 'Valuation'
 ),
 
--- 2) One non-valuation flow per fund/date (latest by transaction_index)
-tmp_call as (
+-- 2) All calls / distribution
+clean_call as (
   select
-    fund_sk,
+    fund_name,
     transaction_date,
     transaction_amount as flow_amount,
-    row_number() over (
-      partition by fund_sk, transaction_date
-      order by transaction_index desc
-    ) as rn
   from {{ ref('fct_fund_event') }}
-  where lower(transaction_type) in ('call')
-),
-clean_call as (
-  select fund_sk, transaction_date, flow_amount
-  from tmp_call
-  where rn = 1
+  where transaction_type in ('Call', 'Distribution')
 ),
 
--- 3) All event dates to report on
+-- 3) All dates to report on
 event_dates as (
-  select distinct fund_sk, transaction_date as event_date
+  select distinct fund_name, transaction_date as event_date
   from {{ ref('fct_fund_event') }}
 ),
 
--- 4) Anchor valuation date = latest valuation on/before each as-of date
+-- 4) Latest valuation date on/before each as-of date
 anchor as (
   select
-    e.fund_sk,
+    e.fund_name,
     e.event_date,
     max(v.transaction_date) as anchor_date
   from event_dates e
   left join clean_valuations v
-    on v.fund_sk = e.fund_sk
+    on v.fund_name = e.fund_name
    and v.transaction_date <= e.event_date
-  group by e.fund_sk, e.event_date
+  group by e.fund_name, e.event_date
 ),
 
--- 5) Anchor valuation amount (pick amount at that anchor_date)
-anchor_with_amount as (
+-- 5) valuation amount that belongs to that anchor date
+anchor_with_valuation as (
   select
-    a.fund_sk,
+    a.fund_name,
     a.event_date,
     a.anchor_date,
     -- pick valuation_amount corresponding to the chosen anchor_date
     any_value(cv.valuation_amount) as anchor_val
   from anchor a
   left join clean_valuations cv
-    on cv.fund_sk = a.fund_sk
+    on cv.fund_name = a.fund_name
    and cv.transaction_date = a.anchor_date
-  group by a.fund_sk, a.event_date, a.anchor_date
+  group by a.fund_name, a.event_date, a.anchor_date
 ),
 
--- 6) Sum flows strictly after anchor_date up to as-of date
-flow_since_anchor as (
+-- 6) add up all the call flows that happened after the anchor valuation date and up to and including the event date
+call_since_anchor as (
   select
-    awa.fund_sk,
-    awa.event_date,
-    coalesce(sum(cf.flow_amount), 0) as flow_since_anchor
-  from anchor_with_amount awa
+    awv.fund_name,
+    awv.event_date,
+    coalesce(sum(cf.flow_amount), 0) as call_since_anchor
+  from anchor_with_valuation awv
   left join clean_call cf
-    on cf.fund_sk = awa.fund_sk
-   and cf.transaction_date >  awa.anchor_date
-   and cf.transaction_date <= awa.event_date
-  group by awa.fund_sk, awa.event_date
+    on cf.fund_name = awv.fund_name
+   and cf.transaction_date >  awv.anchor_date
+   and cf.transaction_date <= awv.event_date
+  group by awv.fund_name, awv.event_date
 )
 
 -- 7) NAV = anchor valuation + flows since anchor
 select
   fund_name,
-  awa.event_date as date,
-  awa.anchor_val + fsa.flow_since_anchor as nav
-from anchor_with_amount awa
-join flow_since_anchor fsa
-  using (fund_sk, event_date)
-join {{ ref('dim_fund') }}
-  using (fund_sk, fund_sk)
-where awa.anchor_val is not null
-order by fund_sk, date
+  awv.event_date as date,
+  awv.anchor_val + csa.call_since_anchor as nav
+from anchor_with_valuation awv
+join call_since_anchor csa
+  using (fund_name, event_date)
+where awv.anchor_val is not null
+order by fund_name, date

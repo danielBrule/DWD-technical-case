@@ -45,7 +45,7 @@ raw_ext exposes the Excel extracts (saved as CSVs in GCS) to BigQuery as externa
 
 **Schema: dbt_dbrule_staging**
 
-## 2. Intermediate (dim_*, fct_*)
+## 2. Intermediate
 * Dimensional models:
     * dim_fund (fund-level attributes, including fund_size).
     * dim_company (company-level attributes).
@@ -54,11 +54,14 @@ raw_ext exposes the Excel extracts (saved as CSVs in GCS) to BigQuery as externa
     * fct_fund_event (all fund transactions).
     * fct_company_valuation (company valuations linked to funds).
 
+* Bridge model: 
+    * bridge_fund_company
+
 * Deduplication applied using row_number() over (...) to keep the latest transaction_index per grain.
 
-**Schema: dbt_dbrule_intermediage**
+**Schema: dbt_dbrule_intermediate**
 
-## 3. Marts (question_*)
+## 3. Marts 
 
 * Q2.1 Fund NAV: Calculate NAV per fund/date as:
     * NAV = latest valuation + flows (calls/distributions) since valuation

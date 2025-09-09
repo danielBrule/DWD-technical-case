@@ -56,7 +56,6 @@ models:
     description: >
       Fact table for fund-level events, including valuations and cashflows
       (Commitments, Distributions, Calls).
-      Grain: 1 row per fund per transaction_index.
     columns:
       - name: fund_sk
         description: "Surrogate_key for the fund."
@@ -72,9 +71,6 @@ models:
         tests:
           - accepted_values:
               values: ['Valuation','Commitment','Distribution','Call']
-      - name: transaction_index
-        description: "Ordering index of the event within the fund."
-        tests: [not_null]
       - name: amount
         description: "Signed amount of the transaction or valuation."
 
@@ -99,5 +95,3 @@ models:
         description: "Date of the valuation."
       - name: valuation_amount
         description: "Reported valuation amount for the company at val_date."
-      - name: transaction_index
-        description: "Ordering index of the valuation record."

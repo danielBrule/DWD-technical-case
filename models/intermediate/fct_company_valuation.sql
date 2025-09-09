@@ -8,7 +8,6 @@ with ranked as (
       dc.company_name,
       sc.transaction_date                         as valuation_date,
       safe_cast(sc.transaction_amount as numeric) as valuation_amount,
-      safe_cast(sc.transaction_index as int64)    as transaction_index,
       row_number() over (
         partition by df.fund_sk, dc.company_id, sc.transaction_type, sc.transaction_date
         order by sc.transaction_index desc
@@ -18,7 +17,12 @@ with ranked as (
     join {{ ref('dim_company') }} dc on dc.company_id = sc.company_id and dc.company_name = sc.company_name
     where sc.transaction_type = 'Valuation'
 )
-
-select *
+select 
+    fund_sk,
+    fund_name,
+    company_id,
+    company_name,
+    valuation_date,
+    valuation_amount
 from ranked
 where rn = 1
