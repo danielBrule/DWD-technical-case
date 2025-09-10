@@ -118,11 +118,10 @@ Seeds
 
 2. dbt job (production):
     * Step 1: dbt deps
-    * Step 2: dbt seed (load country_map)
-    * Step 3: dbt run --select stage
-    * Step 4: dbt run --select intermediate
-    * Step 5: dbt build --select marts
-    * Step 6: dbt test
+    * Step 2: dbt run-operation stage_external_sources
+    * Step 3: dbt seed (load country_map)
+    * Step 4: dbt run 
+    * Step 7: dbt test
 
 3. Docs & Catalog
     * dbt Cloud generates docs after production job run.

@@ -11,9 +11,10 @@ models:
         description: "Name of the parent fund that owns the company."
         tests:
           - not_null
-          - relationships:               
-              to: ref('stg_fund')         
-              field: fund_name
+          - relationships:
+              arguments:               
+                to: ref('stg_fund')         
+                field: fund_name
 
       - name: company_id
         description: "Unique identifier of the company as provided in the source system."
@@ -30,29 +31,33 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values:
-                - Valuation
+              arguments:
+                values:
+                  - Valuation
 
       - name: transaction_index
         description: "Sequence or ordering index of the transaction within the fund/company."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "> 0"
+              arguments:
+                expression: "> 0"
 
       - name: transaction_date
         description: "Date when the valuation or transaction was recorded. Must be >= 2020-01-01."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: ">= '2020-01-01'"
+              arguments:
+                expression: ">= '2020-01-01'"
 
       - name: transaction_amount
         description: "Reported valuation amount for the company. Must be greater than 0."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "> 0"
+              arguments:
+                expression: "> 0"
       - name: sector
         description: "Sector classification of the fund or transaction"
       - name: country
@@ -66,8 +71,9 @@ models:
 
     tests:
       - one_to_one:
-          column_a: company_id
-          column_b: company_name
+          arguments:
+            column_a: company_id
+            column_b: company_name
 
 
   - name: stg_fund
@@ -86,7 +92,8 @@ models:
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "> 0"
+              arguments:
+                expression: "> 0"
 
       - name: transaction_type
         description: >
@@ -95,25 +102,28 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values:
-                - Valuation
-                - Commitment
-                - Distribution
-                - Call
+              arguments:
+                values:
+                  - Valuation
+                  - Commitment
+                  - Distribution
+                  - Call
 
       - name: transaction_index
         description: "Sequence or ordering index of the transaction within the fund. Must be > 0."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: "> 0"
+              arguments:
+                expression: "> 0"
 
       - name: transaction_date
         description: "Date when the fund valuation or transaction occurred. Must be >= 2020-01-01."
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: ">= '2020-01-01'"
+              arguments:
+                expression: ">= '2020-01-01'"
 
       - name: transaction_amount
         description: >
@@ -127,9 +137,10 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values:
-                - Venture Capital
-                - Private Equity
+              arguments:
+                  values:
+                  - Venture Capital
+                  - Private Equity
       - name: country
         description: "Country associated with the fund"
       - name: region
@@ -141,10 +152,12 @@ models:
 
     tests:
       - dbt_utils.expression_is_true:
-          expression: "case when transaction_type = 'Distribution'
-                             then transaction_amount < 0
-                             else transaction_amount > 0
-                           end"
+          arguments:
+            expression: "case when transaction_type = 'Distribution'
+                              then transaction_amount < 0
+                              else transaction_amount > 0
+                            end"
       - one_to_one:
-          column_a: fund_name
-          column_b: fund_size
+          arguments:
+            column_a: fund_name
+            column_b: fund_size
