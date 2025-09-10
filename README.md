@@ -44,6 +44,7 @@ raw_ext exposes the Excel extracts (saved as CSVs in GCS) to BigQuery as externa
     * Add ingestion timestamp.
 
 **Schema: dbt_dbrule_staging**
+![Alt text](images/DWD-staging.jpg)
 
 ## 2. Intermediate
 * Dimensional models:
