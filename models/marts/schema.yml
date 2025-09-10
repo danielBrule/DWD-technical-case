@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: question_2-1_FundNAV
+    description: >
+      Fund-level Net Asset Value (NAV) over time. NAV is calculated as the latest valuation
+      on or before a given date plus the sum of calls/distributions/commitments
+      since that valuation up to the date.
+    columns:
+      - name: fund_name
+        description: "Name of the fund."
+        tests:
+          - not_null
+
+      - name: date
+        description: "As-of date for the NAV."
+        tests:
+          - not_null
+
+      - name: nav
+        description: "Computed NAV of the fund on nav_date."
+        tests:
+          - not_null
+
+  - name: question_2-2-CompanyNAV
+    description: "Company NAV over time using ownership = commitments_to_date / latest fund_size."
+    columns:
+      - name: fund_name
+        tests:
+          - not_null
+      - name: nav_date
+        tests:
+          - not_null
+      - name: company_nav
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"   # NAV should be non-negative under this method
