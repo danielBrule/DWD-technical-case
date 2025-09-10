@@ -86,7 +86,7 @@ We use a star-like schema with two fact tables, three conformed dimensions, and 
 Assumptions 
 * All amounts are in a single currency.
 * fund_size is the latest snapshot and acceptable for ownership.
-* The rule “pick max transaction_index per day” reflects the intended business logic for multiple valuations.
+* The rule “pick max transaction_index per day” reflects the intended business logic for multiple transaction.
 * Flows include Calls (capital calls), Distributions (cash returned), and optionally Commitments
 * Distributions should be negative, Calls positive
 * Calendar granularity: reporting on the union of event dates
@@ -96,13 +96,14 @@ Assumptions
 * Controlled lists: sectors, countries → accepted_values or check against seed lookups.
 * Country mapping coverage: rows in staging not matched by country_map seed.
 * Freshness (error if last refresh older than... )
+* Distributions should be negative, Calls positive
 
 ## How would you monitor data quality over time?
 * Automate dbt jobs in Cloud (Prod): dbt deps → seed → build → test → docs generate.
-* Alerting on failures (email/Slack/webhooks).
+* Alerting on failures (email/Slack/webhooks/...).
 * Track failing rows with singular tests that materialize into QA views (easy to inspect).
 * track  anomaly detection, volume drift, schema changes.
-* Dashboards on test results 
+* Dashboards to track quality, freshness, volume, costs...
 
 ## What edge cases should be considered in testing?
 * fund_size zero or null → ownership% forced to 0; surface as QA.
