@@ -4,26 +4,110 @@
 
 We use a star-like schema with two fact tables, three conformed dimensions, and a simple bridge.
 
-### Fact tables
+* fct_fund_event: supports NAV calculation and the ownership numerator (cumulative commitments).
+* fct_company_valuation: baseline for company NAV before ownership scaling.
+* dim_fund: conformed attributes for slicing and to supply the denominator in the ownership calculation.
+* dim_company: consistent company attributes across funds (a company can appear in multiple funds).
+* bridge_fund_company: quick relationship checks, exploration, and referential integrity tests
 
-fct_fund_event
-* Grain: one row per (fund, transaction_date, transaction_type, transaction_index).
-* Content: all fund-level events — Valuation, Commitment/Call, Distribution.
-* Purpose: supports NAV calculation and the ownership numerator (cumulative commitments).
-* Key columns: fund_key, transaction_date, transaction_type, transaction_index, amount.
+### From a technical standpoint, what are your observations about the data extract?
+* Missing a data dictionnary 
+* Avoid Excel as data source, priviledge API / DB or, if flat file, consider parquet (size, data type...)
+* Multiple valuations per date: need a business rule → keep highest transaction_index.
+* Mixed transactional & static data: fund_size is static (“latest”), while events are transactional.
+* Sparse dates: events are not daily; use as-of logic or construct a date spine for daily reporting
+* We need to define a process to refresh data 
 
-**Notes**: enforce signs (Distributions < 0; Commitments/Calls > 0). Deduplicate using the highest transaction_index per day/type.
 
-fct_company_valuation
+### What potential challenges might arise when working with this data?
+* Ambiguity on same-day valuations (handled with transaction_index).
+* Changing fund_size over time (brief says “latest”; if not true in reality, ownership will drift).
+* Entity resolution: fund names may vary; we would need a fund id.
+* Country/region standardization: handled via seed mapping, but coverage must be maintained.
+* Currency: not present; if multi-currency shows up later, NAVs and ownership must be FX-aware
 
-Grain: one row per (fund, company, valuation_date, transaction_index).
+### Can you identify any data quality issues or inconsistencies?
+* Inconsistent casing/whitespace (fixed in staging).
+* Occasional missing data for company.
+* Extra spaces or punctuation in headers (Excel exports).
+* Index as float, Int expected 
 
-Content: reported company-level valuation amounts.
+### If you were responsible for designing this data extract, what additional information would you include to improve usability?
+* Currencies for all amounts + FX rates/effective dates (or a separate FX table).
+* Explicit “as_of” valuation timestamps and a business “version” field to avoid relying solely on transaction_index.
+* Historical fund_size (effective dates)
+* Unique IDs for funds (natural keys can be brittle).
+* Data lineage/ingest metadata (file name, load timestamp).
+* Transaction source/system code for traceability.
+* not Excel 
 
-Purpose: baseline for company NAV before ownership scaling.
+### What would the end-to-end pipeline look like for ingesting this data into a Snowflake data warehouse?
 
-Key columns: fund_key, company_id, company_name, valuation_date, valuation_amount, transaction_index.
+**NOTE: I have not worked hands-on with Snowflake yet; the design below is based on gen-AI assistance, common sense from data warehousing, and quick research. **
+1. Landing
+    * Drop CSVs from Excel into S3 (or directly into Snowflake stages if preferred).
+    * Ideally go away from Excel CSV to API / DB / parquet
 
-Notes: deduplicate multiple same-day valuations with the highest transaction_index.
+2. Externalization / Ingestion 
+    * Create external stage (S3) and external tables for fund_data_ext, company_data_ext.
 
-(Optional performance layer: precompute daily NAV in fct_fund_nav_daily or monthly company NAV in fct_company_nav_m1. These can always be derived on the fly from the two facts above.)
+3. dbt Staging (stg_fund, stg_company)
+    * Clean/trim/cast types; normalize transaction types; enforce signs; add ingest metadata.
+    * Standardize country/region with seed mapping.
+
+4. dbt Intermediate
+    * Build dim_fund, dim_company, bridge_fund_company.
+    * Build fct_fund_event, fct_company_valuation.
+    * Deduplicate by max transaction_index as needed.
+
+5. dbt Marts
+    * Fund NAV (latest valuation + flows since anchor).
+    * Company NAV using ownership = commitments_to_date / fund_size.
+    
+6. Tests & Docs
+    * create relevant tests: e.g. not_null, accepted_values, relationships, uniqueness (“unique combination of columns”).
+    * Generate dbt docs; publish via dbt Cloud.
+
+7. Orchestration
+    * methodology TBD
+    * Alerts on failures 
+    * report on source freshness 
+
+8. Consumption
+    * Dahsboard to report costs 
+
+
+
+
+
+# Task 2 - SQL Exercises
+
+## Question 2.1 
+Assumptions 
+* All amounts are in a single currency.
+* fund_size is the latest snapshot and acceptable for ownership.
+* The rule “pick max transaction_index per day” reflects the intended business logic for multiple valuations.
+* Flows include Calls (capital calls), Distributions (cash returned), and optionally Commitments
+* Distributions should be negative, Calls positive
+* Calendar granularity: reporting on the union of event dates
+
+# Task 3 - Testing and Data Quality in dbt
+## What other data tests would you recommend for this dataset?
+* Controlled lists: sectors, countries → accepted_values or check against seed lookups.
+* Country mapping coverage: rows in staging not matched by country_map seed.
+* Freshness (error if last refresh older than... )
+
+## How would you monitor data quality over time?
+* Automate dbt jobs in Cloud (Prod): dbt deps → seed → build → test → docs generate.
+* Alerting on failures (email/Slack/webhooks).
+* Track failing rows with singular tests that materialize into QA views (easy to inspect).
+* track  anomaly detection, volume drift, schema changes.
+* Dashboards on test results 
+
+## What edge cases should be considered in testing?
+* fund_size zero or null → ownership% forced to 0; surface as QA.
+* Signs: Distributions must be negative; commitments/calls ≥ 0.
+* Whitespace/case diffs in fund_name/company_name → normalize in staging and test trim()/case rules if needed.
+* “N/A” strings → null mapping verified.
+* Transaction_index dust (e.g., 1.00000021) → round/ceil in staging and assert integer positivity.
+* Currency: if multi-currency ever appears, add currency codes + FX conformity tests. Check FX across lines for one date 
