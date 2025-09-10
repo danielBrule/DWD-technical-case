@@ -91,6 +91,20 @@ Assumptions
 * Distributions should be negative, Calls positive
 * Calendar granularity: reporting on the union of event dates
 
+
+## Question 2.4
+difference exist on Summitvale Equity Group fordate 31/12/2020 and 31/03/2021
+
+NAV: most recent valuation of the fund + calls - distributions 
+
+Method 1 — Per-company NAV = (sum. Commitments up to date ÷ latest Fund Size) × company valuation
+Method 2 — Per-company NAV = (Fund NAV ÷ Σ company valuations on that date) x company valuation
+
+Method 1 bases company NAV only on commitments and fund size. It ignores the impact of calls and distributions on the fund’s NAV, so the sum of company NAVs may not match the actual reported fund NAV.
+
+Method 2 (scaled to fund NAV) takes the reported fund NAV (which already reflects calls, distributions, and other cash movements) and proportionally scales company valuations so that they reconcile exactly.
+
+
 # Task 3 - Testing and Data Quality in dbt
 ## What other data tests would you recommend for this dataset?
 * Controlled lists: sectors, countries → accepted_values or check against seed lookups.
