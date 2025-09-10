@@ -33,6 +33,9 @@ raw_ext exposes the Excel extracts (saved as CSVs in GCS) to BigQuery as externa
 
 **Schema: raw_ext**
 
+![Raw schema](images/DWD-raw_ext.jpg)
+
+
 ### 1. Staging 
 
 * One model per raw source table (stg_fund, stg_company).
@@ -44,6 +47,8 @@ raw_ext exposes the Excel extracts (saved as CSVs in GCS) to BigQuery as externa
     * Add ingestion timestamp.
 
 **Schema: dbt_dbrule_staging**
+
+![Staging schema](images/DWD-staging.jpg)
 
 ## 2. Intermediate
 * Dimensional models:
@@ -61,6 +66,8 @@ raw_ext exposes the Excel extracts (saved as CSVs in GCS) to BigQuery as externa
 
 **Schema: dbt_dbrule_intermediate**
 
+![intermediate schema](images/DWD-Intermediate.jpg)
+
 ## 3. Marts 
 
 * Q2.1 Fund NAV: Calculate NAV per fund/date as:
@@ -76,6 +83,10 @@ raw_ext exposes the Excel extracts (saved as CSVs in GCS) to BigQuery as externa
 
 
 Forward-filled daily NAV model (fund_nav_daily) for continuous reporting.
+
+![Mart schema](images/DWD-marts.jpg)
+
+![flow schema](images/DWD-Flow.jpg)
 
 ## Testing & Data Quality
 
