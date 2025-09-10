@@ -50,6 +50,9 @@ models:
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= '2020-01-01'"
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= current_date()"
 
       - name: transaction_amount
         description: "Reported valuation amount for the company. Must be greater than 0."
@@ -124,6 +127,9 @@ models:
           - dbt_utils.expression_is_true:
               arguments:
                 expression: ">= '2020-01-01'"
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: "<= current_date()"
 
       - name: transaction_amount
         description: >
