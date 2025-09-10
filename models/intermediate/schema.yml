@@ -37,20 +37,23 @@ models:
       Grain: 1 row per distinct (fund_sk, company_id) pair.
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns: ['fund_sk','company_id']
+          arguments:
+            combination_of_columns: ['fund_sk','company_id']
     columns:
       - name: fund_sk
         description: "key for the fund, referencing dim_fund.fund_sk."
         tests:
           - relationships:
-              to: ref('dim_fund')
-              field: fund_sk
+              arguments:
+                to: ref('dim_fund')
+                field: fund_sk
       - name: company_id
         description: "Business key for the company, referencing dim_company.company_id."
         tests:
           - relationships:
-              to: ref('dim_company')
-              field: company_id
+              arguments:
+                to: ref('dim_company')
+                field: company_id
 
   - name: fct_fund_event
     description: >
@@ -61,8 +64,9 @@ models:
         description: "Surrogate_key for the fund."
         tests:
           - relationships:
-              to: ref('dim_fund')
-              field: fund_sk
+              arguments:
+                to: ref('dim_fund')
+                field: fund_sk
 
       - name: transaction_date
         description: "Date of the event (valuation or cashflow)."
@@ -70,7 +74,8 @@ models:
         description: "Event type (Valuation, Commitment, Distribution, Call)."
         tests:
           - accepted_values:
-              values: ['Valuation','Commitment','Distribution','Call']
+              arguments:
+                values: ['Valuation','Commitment','Distribution','Call']
       - name: amount
         description: "Signed amount of the transaction or valuation."
 
@@ -83,14 +88,16 @@ models:
         description: "Business key for the fund, referencing dim_fund.fund_name."
         tests:
           - relationships:
-              to: ref('dim_fund')
-              field: fund_name
+              arguments:
+                to: ref('dim_fund')
+                field: fund_name
       - name: company_id
         description: "Business key for the company, referencing dim_company.company_id."
         tests:
           - relationships:
-              to: ref('dim_company')
-              field: company_id
+              arguments:
+                to: ref('dim_company')
+                field: company_id
       - name: val_date
         description: "Date of the valuation."
       - name: valuation_amount

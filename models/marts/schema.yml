@@ -35,4 +35,71 @@ models:
         tests:
           - not_null
           - dbt_utils.expression_is_true:
-              expression: ">= 0"   # NAV should be non-negative under this method
+              arguments:
+                expression: ">= 0"   # NAV should be non-negative under this method
+
+  - name: question_2-3-CompanyNAV_NewComputation
+    description: |
+      Company-level NAVs using the "scaled to fund NAV" method (Task 2.3).
+
+      For each (fund, date), the fund NAV is divided proportionally across the companies
+      based on their reported valuations. This ensures the sum of company NAVs
+      equals the fund NAV on that date.
+
+      Example: If fund NAV = 8.5m, sum of company valuations = 850m, then scale_pct = 1%.
+      Each company valuation is multiplied by 1% to derive its NAV contribution.
+
+    columns:
+      - name: fund_name
+        description: "Name of the fund."
+        tests:
+          - not_null
+
+      - name: company_id
+        description: "Unique identifier of the company."
+        tests:
+          - not_null
+
+      - name: company_name
+        description: "Reported company name."
+        tests:
+          - not_null
+
+      - name: nav_date
+        description: "The reporting date (must exist in both fund NAV and company valuation)."
+        tests:
+          - not_null
+
+      - name: company_valuation
+        description: "Raw reported company valuation amount (pre-scaling)."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: fund_nav
+        description: "Fund-level NAV on nav_date."
+        tests:
+          - not_null
+
+      - name: total_company_valuation
+        description: "Sum of all company valuations for the fund on nav_date."
+        tests:
+          - not_null
+
+      - name: scale_pct
+        description: "Scaling factor applied so that sum(company_nav) = fund_nav."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
+
+      - name: company_nav
+        description: "Final NAV for the company after applying scale_pct."
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              arguments:
+                expression: ">= 0"
