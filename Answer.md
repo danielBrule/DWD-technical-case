@@ -98,6 +98,7 @@ difference exist on Summitvale Equity Group fordate 31/12/2020 and 31/03/2021
 NAV: most recent valuation of the fund + calls - distributions 
 
 Method 1 — Per-company NAV = (sum. Commitments up to date ÷ latest Fund Size) × company valuation
+
 Method 2 — Per-company NAV = (Fund NAV ÷ Σ company valuations on that date) x company valuation
 
 Method 1 bases company NAV only on commitments and fund size. It ignores the impact of calls and distributions on the fund’s NAV, so the sum of company NAVs may not match the actual reported fund NAV.
@@ -126,3 +127,4 @@ Method 2 (scaled to fund NAV) takes the reported fund NAV (which already reflect
 * “N/A” strings → null mapping verified.
 * Transaction_index dust (e.g., 1.00000021) → round/ceil in staging and assert integer positivity.
 * Currency: if multi-currency ever appears, add currency codes + FX conformity tests. Check FX across lines for one date 
+
